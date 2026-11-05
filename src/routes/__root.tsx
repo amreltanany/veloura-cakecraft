@@ -13,6 +13,12 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+// Full public URL of a file in /public. VITE_SITE_ORIGIN is set by the GitHub
+// Pages workflow (e.g. https://amreltanany.github.io); without it the URL stays relative.
+function siteUrl(path: string) {
+  return `${import.meta.env["VITE_SITE_ORIGIN"] ?? ""}${import.meta.env.BASE_URL}${path}`;
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -80,12 +86,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "VÈLÔURÁ — Cakes & Bakes" },
       { name: "description", content: "Small-batch celebration cakes, baked slowly and finished by hand." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "VÈLÔURÁ" },
+      { property: "og:site_name", content: "VÈLÔURÁ" },
       { property: "og:title", content: "VÈLÔURÁ — Cakes & Bakes" },
       { property: "og:description", content: "Small-batch celebration cakes, baked slowly and finished by hand." },
       { property: "og:type", content: "website" },
+      // Link previews (WhatsApp, Facebook, X…) need an absolute image URL.
+      { property: "og:image", content: siteUrl("og-image.jpg") },
+      { property: "og:image:width", content: "1600" },
+      { property: "og:image:height", content: "1008" },
+      { property: "og:url", content: siteUrl("") },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:image", content: siteUrl("og-image.jpg") },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -98,7 +110,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico`, type: "image/x-icon" },
+      { rel: "icon", href: `${import.meta.env.BASE_URL}icon.svg`, type: "image/svg+xml" },
+      { rel: "icon", href: `${import.meta.env.BASE_URL}icon-32.png`, type: "image/png", sizes: "32x32" },
+      { rel: "apple-touch-icon", href: `${import.meta.env.BASE_URL}apple-touch-icon.png` },
     ],
   }),
   shellComponent: RootShell,

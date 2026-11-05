@@ -27,6 +27,7 @@ jobs:
       - run: bun run build:pages
         env:
           PAGES_BASE: /${{ github.event.repository.name }}/
+          VITE_SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/client
