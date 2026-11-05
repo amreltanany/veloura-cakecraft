@@ -7,6 +7,8 @@ export const getRouter = () => {
 
   const router = createRouter({
     routeTree,
+    // "/" normally; "/<repo>/" for the GitHub Pages build (vite `base`).
+    basepath: import.meta.env.BASE_URL,
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,

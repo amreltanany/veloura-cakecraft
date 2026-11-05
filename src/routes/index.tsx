@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowDown,
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useSmoothScroll } from "@/hooks/use-smooth-scroll";
 import bakeryHero from "@/assets/bakery-hero.jpg";
 import chocolateCake from "@/assets/chocolate-ganache.jpg";
 import lemonCake from "@/assets/lemon-elderflower.jpg";
@@ -34,7 +35,7 @@ type Cake = {
 };
 
 type CartItem = Cake & { quantity: number; details?: string };
-type DialogView = "cart" | "checkout" | "complete";
+type DialogView = "cart" | "builder" | "checkout" | "complete";
 
 const cakes: Cake[] = [
   {
@@ -79,12 +80,12 @@ const cakeChoices = {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bramble & Bloom — Cakes & Bakes" },
+      { title: "VÈLÔURÁ — Cakes & Bakes" },
       {
         name: "description",
         content: "Small-batch celebration cakes, baked slowly and finished by hand. Find a favorite or make it your own.",
       },
-      { property: "og:title", content: "Bramble & Bloom — Cakes & Bakes" },
+      { property: "og:title", content: "VÈLÔURÁ — Cakes & Bakes" },
       {
         property: "og:description",
         content: "Small-batch celebration cakes, baked slowly and finished by hand.",
@@ -118,6 +119,20 @@ function BakeryStorefront() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const customPrice = sizes.find((option) => option.name === size)?.price ?? 54;
   const customDescription = `${size} · ${sponge} sponge · ${filling} · ${frosting} · ${finish}${inscription.trim() ? ` · “${inscription.trim()}”` : ""}${pickupDate ? ` · pickup ${pickupDate}` : ""}`;
+
+  const lenis = useSmoothScroll();
+  // Pause smooth scroll while the bag dialog is open so the page behind it stays put.
+  useEffect(() => {
+    if (dialogOpen) lenis.current?.stop();
+    else lenis.current?.start();
+  }, [dialogOpen, lenis]);
+
+  function scrollToSection(id: string) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (lenis.current) lenis.current.scrollTo(target, { offset: -16 });
+    else target.scrollIntoView({ behavior: "smooth" });
+  }
 
   const summary = useMemo(() => cart.map(({ id, name, details, quantity }) => ({ id, name, details, quantity })), [cart]);
 
@@ -208,13 +223,13 @@ function BakeryStorefront() {
 
       <header className="relative z-10 border-b border-border/70 bg-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-10">
-          <a href="#home" className="group flex shrink-0 items-center gap-2" aria-label="Bramble and Bloom home">
+          <a href="#home" className="group flex shrink-0 items-center gap-2" aria-label="VÈLÔURÁ home">
             <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground">
               <Wheat className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="leading-none">
-              <span className="block font-display text-xl font-semibold">Bramble & Bloom</span>
-              <span className="mt-1 block text-[10px] font-medium uppercase text-muted-foreground">A little neighborhood bakery</span>
+              <span className="block font-display text-xl font-semibold">VÈLÔURÁ</span>
+              <span className="mt-1 hidden text-[10px] font-medium uppercase text-muted-foreground min-[360px]:block">A little neighborhood bakery</span>
             </span>
           </a>
 
@@ -247,7 +262,7 @@ function BakeryStorefront() {
             <Button asChild size="lg" className="rounded-sm px-6">
               <a href="#cakes">Find your cake <ArrowRight aria-hidden="true" /></a>
             </Button>
-            <Button variant="ghost" size="lg" className="rounded-sm px-4" onClick={() => document.getElementById("custom")?.scrollIntoView({ behavior: "smooth" })}>
+            <Button variant="ghost" size="lg" className="rounded-sm px-4" onClick={() => scrollToSection("custom")}>
               Make it yours <ArrowDown aria-hidden="true" />
             </Button>
           </div>
@@ -257,7 +272,7 @@ function BakeryStorefront() {
           </div>
         </div>
         <div className="relative order-1 overflow-hidden rounded-sm md:order-2">
-          <img src={bakeryHero} alt="Fresh strawberry layer cake finished with berries and cream" width={1600} height={1000} fetchPriority="high" className="aspect-[1.35/1] w-full object-cover md:aspect-[1.18/1]" />
+          <img src={bakeryHero} alt="Fresh strawberry layer cake finished with berries and cream" width={1600} height={1000} fetchPriority="high" data-parallax className="aspect-[1.35/1] w-full object-cover md:aspect-[1.18/1]" />
           <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-background/95 px-4 py-3 shadow-sm sm:bottom-6 sm:left-6">
             <span className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground"><Sparkles className="h-5 w-5" aria-hidden="true" /></span>
             <span><span className="block font-display text-lg leading-tight">The little celebration cake</span><span className="text-xs text-muted-foreground">Our strawberry-season favorite</span></span>
@@ -267,7 +282,7 @@ function BakeryStorefront() {
 
       <section id="cakes" className="border-y border-border bg-secondary/40 py-14 md:py-20">
         <div className="mx-auto max-w-7xl px-5 md:px-10">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 md:mb-10">
+          <div data-reveal className="mb-8 flex flex-wrap items-end justify-between gap-4 md:mb-10">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase text-primary">From our cake table</p>
               <h2 className="font-display text-4xl font-medium sm:text-5xl">Made to be remembered.</h2>
@@ -276,7 +291,7 @@ function BakeryStorefront() {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {cakes.map((cake) => (
-              <article key={cake.id} className="group overflow-hidden border border-border bg-card">
+              <article key={cake.id} data-reveal className="group overflow-hidden border border-border bg-card">
                 <div className="relative overflow-hidden">
                   <img src={cake.image} alt={cake.name} width={1024} height={1024} loading="lazy" className="aspect-[1.14/1] w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]" />
                   <span className="absolute left-3 top-3 bg-background/95 px-3 py-1.5 text-xs font-medium">{cake.label}</span>
@@ -297,11 +312,11 @@ function BakeryStorefront() {
       </section>
 
       <section id="custom" className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-14 md:grid-cols-[1fr_0.9fr] md:gap-16 md:px-10 md:py-20">
-        <div className="relative overflow-hidden rounded-sm">
+        <div data-reveal className="relative overflow-hidden rounded-sm">
           <img src={lemonCake} alt="Lemon and elderflower cake decorated with fresh citrus and tiny flowers" width={1024} height={1024} loading="lazy" className="aspect-[1.25/1] w-full object-cover" />
           <span className="absolute bottom-4 left-4 bg-background/95 px-3 py-2 text-xs font-medium">Every detail, your call</span>
         </div>
-        <div className="max-w-lg">
+        <div data-reveal className="max-w-lg">
           <p className="mb-3 text-xs font-semibold uppercase text-primary">The best part? You make the rules.</p>
           <h2 className="font-display text-4xl font-medium leading-tight sm:text-5xl">Your cake, your kind of lovely.</h2>
           <p className="mt-4 text-base leading-7 text-muted-foreground">Pick your sponge, filling and finish. Add a little message and a pickup day. We’ll bake it fresh, just for your table.</p>
@@ -313,12 +328,12 @@ function BakeryStorefront() {
               "Add a note for your moment",
             ].map((detail) => <li key={detail} className="flex items-center gap-2"><Check className="h-4 w-4 shrink-0 text-accent-foreground" aria-hidden="true" />{detail}</li>)}
           </ul>
-          <Button onClick={() => { setDialogView("cart"); setDialogOpen(true); }} size="lg" className="mt-8 rounded-sm px-6">Build your cake <ArrowRight aria-hidden="true" /></Button>
+          <Button onClick={() => { setDialogView("builder"); setDialogOpen(true); }} size="lg" className="mt-8 rounded-sm px-6">Build your cake <ArrowRight aria-hidden="true" /></Button>
         </div>
       </section>
 
       <section id="our-way" className="border-y border-border bg-accent/45 py-12 md:py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:grid-cols-3 md:px-10">
+        <div data-reveal className="mx-auto grid max-w-7xl gap-8 px-5 sm:grid-cols-3 md:px-10">
           <div className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-background text-primary"><Wheat className="h-5 w-5" aria-hidden="true" /></span><div><h3 className="font-display text-xl">The good stuff</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">Real butter, seasonal fruit, and ingredients we’re proud to bake with.</p></div></div>
           <div className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-background text-primary"><Heart className="h-5 w-5" aria-hidden="true" /></span><div><h3 className="font-display text-xl">A little extra care</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">Small batches mean every cake gets the time and attention it deserves.</p></div></div>
           <div className="flex gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-background text-primary"><Clock3 className="h-5 w-5" aria-hidden="true" /></span><div><h3 className="font-display text-xl">Fresh for your day</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">Choose a pickup date with your custom cake, and we’ll have it ready.</p></div></div>
@@ -326,12 +341,12 @@ function BakeryStorefront() {
       </section>
 
       <footer className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-7 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-10">
-        <span className="font-display text-lg text-foreground">Bramble & Bloom</span>
+        <span className="font-display text-lg text-foreground">VÈLÔURÁ</span>
         <span>Made with care, a little flour, and a lot of heart.</span>
       </footer>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setDialogView("cart"); }}>
-        <DialogContent className="max-h-[90dvh] overflow-y-auto rounded-sm sm:max-w-xl">
+        <DialogContent data-lenis-prevent className="max-h-[90dvh] overflow-y-auto rounded-sm sm:max-w-xl">
           {dialogView === "cart" && (
             <>
               <DialogHeader>
@@ -364,21 +379,21 @@ function BakeryStorefront() {
                 </div>
               ) : (
                 <div className="space-y-4 py-2">
-                  <Button variant="outline" className="w-full justify-between rounded-sm" onClick={() => { setDialogOpen(false); document.getElementById("cakes")?.scrollIntoView({ behavior: "smooth" }); }}>Browse the cake table <ArrowRight aria-hidden="true" /></Button>
-                  <Button className="w-full justify-between rounded-sm" onClick={() => setDialogView("checkout")}>Make a custom cake <Sparkles aria-hidden="true" /></Button>
-                  {dialogView === "checkout" && null}
+                  <Button variant="outline" className="w-full justify-between rounded-sm" onClick={() => { setDialogOpen(false); scrollToSection("cakes"); }}>Browse the cake table <ArrowRight aria-hidden="true" /></Button>
+                  <Button className="w-full justify-between rounded-sm" onClick={() => setDialogView("builder")}>Make a custom cake <Sparkles aria-hidden="true" /></Button>
                 </div>
               )}
             </>
           )}
 
-          {dialogView === "checkout" && (
+          {/* The builder has its own view: it used to live inside "checkout" and only
+              showed while the bag was empty, so it vanished once anything was added. */}
+          {dialogView === "builder" && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display text-3xl font-medium">{cart.length ? "A few finishing details" : "Make it your own."}</DialogTitle>
-                <DialogDescription>{cart.length ? "We’ll have your order ready for bakery pickup." : "Choose your favorite layers and we’ll make a cake just for you."}</DialogDescription>
+                <DialogTitle className="font-display text-3xl font-medium">Make it your own.</DialogTitle>
+                <DialogDescription>Choose your favorite layers and we’ll make a cake just for you.</DialogDescription>
               </DialogHeader>
-              {cart.length === 0 ? (
                 <div className="space-y-5">
                   <fieldset className="space-y-2">
                     <legend className="text-sm font-semibold">Size</legend>
@@ -397,10 +412,18 @@ function BakeryStorefront() {
                   <div className="flex items-center justify-between border-t border-border pt-4 font-semibold"><span>Your custom cake</span><span>{formatPrice(customPrice)}</span></div>
                   <Button className="w-full rounded-sm" size="lg" onClick={addCustomCake}>Add custom cake to bag <ShoppingBag aria-hidden="true" /></Button>
                 </div>
-              ) : (
+            </>
+          )}
+
+          {dialogView === "checkout" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-3xl font-medium">A few finishing details</DialogTitle>
+                <DialogDescription>We’ll have your order ready for bakery pickup.</DialogDescription>
+              </DialogHeader>
                 <form onSubmit={submitCheckout} className="space-y-5">
                   <div className="border-y border-border py-3 text-sm">
-                    {summary.map((item) => <div key={item.id} className="flex justify-between gap-3 py-1"><span>{item.quantity} × {item.name}</span><span>{formatPrice(cart.find((cake) => cake.id === item.id)?.price ?? 0 * item.quantity)}</span></div>)}
+                    {summary.map((item) => <div key={item.id} className="flex justify-between gap-3 py-1"><span>{item.quantity} × {item.name}</span><span>{formatPrice((cart.find((cake) => cake.id === item.id)?.price ?? 0) * item.quantity)}</span></div>)}
                     <div className="mt-2 flex justify-between border-t border-border pt-3 font-semibold"><span>Subtotal</span><span>{formatPrice(cartTotal)}</span></div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -413,7 +436,6 @@ function BakeryStorefront() {
                   <Button type="submit" className="w-full rounded-sm" size="lg">Preview order confirmation <ArrowRight aria-hidden="true" /></Button>
                   <Button type="button" variant="ghost" className="w-full rounded-sm" onClick={() => setDialogView("cart")}>Back to bag</Button>
                 </form>
-              )}
             </>
           )}
 
